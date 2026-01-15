@@ -28,7 +28,7 @@ jobs:
 
           # 预创建 data 目录以防万一（如果脚本没自动创建）
           mkdir -p data
-          mkdir -p categorys
+          mkdir -p types
 
           echo "Running generate.ts..."
           deno run -A generate.ts
@@ -52,5 +52,5 @@ jobs:
             --no-progress \
             --exclude "*" \
             --include "data/*.json" \
-            --include "categorys/*/*.json" \
+            --include "types/*/*.json" \
             --content-type "application/json" \
