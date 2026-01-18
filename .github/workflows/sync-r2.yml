@@ -2,8 +2,6 @@ name: Generate Hitokoto Data Sync to R2
 
 on:
   workflow_dispatch:
-  schedule:
-    - cron: '0 17 * * *' # 北京时间 01:00
 
 jobs:
   generate-and-sync:
