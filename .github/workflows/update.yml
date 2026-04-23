@@ -35,6 +35,9 @@ jobs:
           echo "Running generate.ts..."
           deno run -A generate.ts
 
+          # 删除 sentences-bundle
+          rm -rf sentences-bundle   
+
       # 4. 使用 GitHub Bot 账号提交修改
       - name: Commit changes as GitHub Bot
         run: |
