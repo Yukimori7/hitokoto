@@ -27,7 +27,7 @@ jobs:
           # 预创建 data 目录以防万一（如果脚本没自动创建）
           mkdir -p data
 
-          echo "Running generate.ts..."
+          echo "Running gen.py..."
           python gen.py  
       
       # 4. 同步 data 目录到 Cloudflare R2
