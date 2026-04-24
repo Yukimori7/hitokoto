@@ -1,4 +1,4 @@
-name: Generate Hitokoto Data and Sync to GitHub Pages
+name: Generate Hitokoto Data and Sync to Cloudflare R2
 
 on:
   workflow_dispatch:
