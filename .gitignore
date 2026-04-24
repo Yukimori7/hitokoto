@@ -1,2 +1,7 @@
 .secrets
 .DS_Store
+sentences-bundle
+data
+.env
+.env.local
+__pycache__

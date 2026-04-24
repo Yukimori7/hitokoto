@@ -1,4 +1,4 @@
-name: Generate Hitokoto Data and Deploy to GitHub Pages
+name: Generate Hitokoto Data and Sync to GitHub Pages
 
 on:
   workflow_dispatch:
@@ -6,23 +6,19 @@ on:
 jobs:
   generate-and-deploy:
     runs-on: ubuntu-latest
-    permissions:
-      pages: write
-      id-token: write
-      contents: write
 
     steps:
-      # 1. 拉取代码 (使用 v6)
+      # 1. 拉取代码
       - name: Checkout code
         uses: actions/checkout@v6
 
-      # 2. 安装 Deno 环境 (使用 v2，指定 Deno 2.x 版本)
-      - name: Setup Deno
-        uses: denoland/setup-deno@v2
+      # 2. 安装 Python 环境
+      - name: Setup Python
+        uses: actions/setup-python@v6
         with:
-          deno-version: v2.x
+          python-version: '3.14'
 
-      # 3. 依次运行 Deno 脚本
+      # 3. 依次运行 Python 脚本
       - name: Run Generate
         run: |
           echo "Clone hitokoto"
@@ -30,31 +26,27 @@ jobs:
 
           # 预创建 data 目录以防万一（如果脚本没自动创建）
           mkdir -p data
-          mkdir -p types
 
           echo "Running generate.ts..."
-          deno run -A generate.ts
-
-          # 删除 sentences-bundle
-          rm -rf sentences-bundle   
-
-      # 4. 使用 GitHub Bot 账号提交修改
-      - name: Commit changes as GitHub Bot
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-
-          git add .
-          git commit -m "Update hitokoto" || exit 0
-          git push
+          python gen.py  
       
-      # 5. 静态资源打包
-      - name: Upload Pages artifact
-        uses: actions/upload-pages-artifact@v3
-        with:
-          path: ./
+      # 4. 同步 data 目录到 Cloudflare R2
+      - name: Sync to Cloudflare R2
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+          R2_ENDPOINT: https://${{ secrets.CF_ACCOUNT_ID }}.r2.cloudflarestorage.com
+          R2_BUCKET_NAME: hitokoto
+        run: |
+          # 同步 data 目录
+          # aws s3 sync 默认递归处理子目录
+          # --exclude "*" + --include "*.json" 确保只上传 JSON 文件
+          # --content-type 强制设置为 JSON，方便浏览器预览
 
-      # 5. 上传至 GitHub Pages
-      - name: Deploy to GitHub Pages
-        id: deployment
-        uses: actions/deploy-pages@v4
+          aws s3 sync ./data s3://$R2_BUCKET_NAME \
+            --endpoint-url $R2_ENDPOINT \
+            --region auto \
+            --no-progress \
+            --exclude "*" \
+            --include "*.json" \
+            --content-type "application/json" \
